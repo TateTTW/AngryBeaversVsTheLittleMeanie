@@ -4,49 +4,70 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
 </head>
 <body>
-
     <script>
-    var config = {
-        type: Phaser.AUTO,
-        width: 740,
-        height: 580,
-        physics: {
-            default: 'arcade',
-            arcade: {
-                gravity: { y: 200 }
-            }
-        },
-        scene: {
-            preload: preload,
-            create: create,
-            update: update
-        }
-    };
+var sprite;
+var cursors;
+var player;
+var rocks;
+var logs;
+var direction;
+var beaver = 'norb';
 
-    var game = new Phaser.Game(config);
+class SceneA extends Phaser.Scene {
 
-    var sprite;
-    var cursors;
-    var player;
-    var rocks;
-    var logs;
-    var direction;
-    var beaver = 'norb';
+  constructor ()
+  {
+      super('SceneA');
+  }
 
-    function preload ()
+  preload(){
+    this.load.image('Norbert', 'assets/images/Norbert.png');
+    this.load.image('Daggett', 'assets/images/Daggett.png');
+    this.load.image('Dam', 'assets/images/beaverDam.jpg');
+  }
+
+  beaverClicked(){
+    this.scene.start('SceneB');
+  }
+  create(){
+    cursors = this.input.keyboard.createCursorKeys();
+    var dam = this.add.image(370, 290, 'Dam');
+
+    dam.displayWidth = 750;
+    dam.scaleY = dam.scaleX;
+
+    var daggett = this.add.image(300, 320, 'Daggett').setInteractive();
+    var norbert = this.add.image(485, 320, 'Norbert').setInteractive();
+    daggett.on('pointerdown', function(){
+      beaver = 'dag';
+      this.scene.start('SceneB');
+    },this);
+    norbert.on('pointerdown', function(){
+      beaver = 'norb';
+      this.scene.start('SceneB');
+    },this);
+  }
+
+  update(){
+
+  }
+}
+
+class SceneB extends Phaser.Scene {
+    constructor ()
     {
-        this.load.image('logo', 'assets/images/water.gif');
+        super('SceneB');
+    }
+    preload ()
+    {
         this.load.image('rock', 'assets/images/rock.png');
-        this.load.image('death', 'assets/images/death.png');
         this.load.image('log', 'assets/images/log.png');
         this.load.spritesheet('water', 'assets/images/watersheet.png',{ frameWidth: 370, frameHeight: 361 });
         this.load.spritesheet('norb', 'assets/images/norbsheet.png',{ frameWidth: 500, frameHeight: 500 });
         this.load.spritesheet('dag', 'assets/images/dagsheet.png',{ frameWidth: 500, frameHeight: 500 });
-  //     this.load.spritesheet('sky', 'assets/images/water1.png', 368, 359);
-  //      this.load.spritesheet('sky', 'assets/images/watersheet.png', 370, 361);
     }
 
-    function create ()
+    create ()
     {
           var config = {
               key: 'movingwater',
@@ -140,33 +161,11 @@
         player.displayWidth = 65;
         player.scaleY = player.scaleX;
 
-         // this.anims.create({
-         //         key: 'right',
-         //         frames: this.anims.generateFrameNumbers('water', { start: 0, end: 2 }),
-         //         frameRate: 10,
-         //         repeat: -1
-         //     });
-
-        // var particles = this.add.particles('red');
-
-        // var emitter = particles.createEmitter({
-        //     speed: 100,
-        //     scale: { start: 1, end: 0 },
-        //     blendMode: 'ADD'
-        // });
-
-        // var logo = this.physics.add.image(400, 100, 'logo');
-        //
-        // logo.setVelocity(100, 200);
-        // logo.setBounce(1, 1);
-        // logo.setCollideWorldBounds(true);
-
-        // emitter.startFollow(logo);
         this.physics.add.collider(player, rocks);
         cursors = this.input.keyboard.createCursorKeys();
     }
 
-    function update(){
+    update(){
       if(cursors.up.isDown && cursors.left.isDown){
           direction = 'left';
           player.setVelocityX(-160);
@@ -217,6 +216,20 @@
         var poop = 'poop';
       }
     }
+  }
+  var config = {
+      type: Phaser.AUTO,
+      width: 740,
+      height: 580,
+      physics: {
+          default: 'arcade',
+          arcade: {
+              gravity: { y: 200 }
+          }
+      },
+      scene: [ SceneA, SceneB ]
+  };
+  var game = new Phaser.Game(config);
     </script>
 
 </body>
