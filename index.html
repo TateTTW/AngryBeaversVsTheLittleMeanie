@@ -5,13 +5,16 @@
 </head>
 <body>
     <script>
-var sprite;
+var score = 0;
+var scoreText;
 var cursors;
 var player;
 var rocks;
 var logs;
 var direction;
+var time;
 var beaver = 'norb';
+var lives = [];
 
 class SceneA extends Phaser.Scene {
 
@@ -62,6 +65,9 @@ class SceneB extends Phaser.Scene {
     {
         this.load.image('rock', 'assets/images/rock.png');
         this.load.image('log', 'assets/images/log.png');
+        this.load.image('menuBtn', 'assets/images/menu.png');
+        this.load.image('norbLife', 'assets/images/norbLife.png');
+        this.load.image('dagLife', 'assets/images/dagLife.png');
         this.load.spritesheet('water', 'assets/images/watersheet.png',{ frameWidth: 370, frameHeight: 361 });
         this.load.spritesheet('norb', 'assets/images/norbsheet.png',{ frameWidth: 500, frameHeight: 500 });
         this.load.spritesheet('dag', 'assets/images/dagsheet.png',{ frameWidth: 500, frameHeight: 500 });
@@ -69,18 +75,24 @@ class SceneB extends Phaser.Scene {
 
     create ()
     {
-          var config = {
-              key: 'movingwater',
-              frames: this.anims.generateFrameNumbers('water', { start: 0, end: 2 }),
-              frameRate: 7,
-              repeat: -1
-          };
-
-        this.anims.create(config);
+        this.anims.create({
+            key: 'movingwater',
+            frames: this.anims.generateFrameNumbers('water', { start: 0, end: 2 }),
+            frameRate: 7,
+            repeat: -1
+        });
         this.add.sprite(185, 181, 'water').play('movingwater');
         this.add.sprite(555, 181, 'water').play('movingwater');
         this.add.sprite(185, 542, 'water').play('movingwater');
         this.add.sprite(555, 542, 'water').play('movingwater');
+
+        var menuBtn = this.add.image(680, 30, 'menuBtn').setInteractive();
+        menuBtn.displayWidth = 80;
+        menuBtn.scaleY = menuBtn.scaleX;
+        menuBtn.on('pointerdown', function(){
+          this.scene.start('SceneA');
+        },this);
+
 
         rocks = this.physics.add.staticGroup();
 
@@ -95,8 +107,14 @@ class SceneB extends Phaser.Scene {
         rocks.create(580, 560, 'rock');
         rocks.create(680, 560, 'rock');
 
-        logs = this.physics.add.staticGroup();
-        rocks.create(215, 320, 'log');
+        logs = this.physics.add.group();
+
+        for(var i = 0; i < 3; i++){
+          var life = this.add.image(i * 32 +33, 60, beaver+'Life');
+          life.displayWidth = 35;
+          life.scaleY = life.scaleX;
+          lives.push(life);
+        }
 
             this.anims.create({
                 key: 'norbLeft',
@@ -154,15 +172,39 @@ class SceneB extends Phaser.Scene {
                 repeat: -1
             });
 
-        player = this.physics.add.sprite(180, 180, 'norb').play('norbRight');
-        //var norb = this.add.sprite(185, 181, 'norb').play('norbSwimming');
+        // create player
+        player = this.physics.add.sprite(360, 210, beaver).play(beaver+'Right');
         player.setCollideWorldBounds(true);
-
         player.displayWidth = 65;
         player.scaleY = player.scaleX;
 
-        this.physics.add.collider(player, rocks);
+        this.physics.add.collider(player, rocks, function(guy, rock){
+          guy.enableBody(true, 360, 210, true, true)
+          var life = lives.pop();
+          life.destroy();
+
+        }, null, this);
+
+        this.physics.add.collider(rocks, logs, function(rock, log){
+          log.disableBody(true, true)
+        }, null, this);
+
+        this.physics.add.collider(player, logs, function(guy, log){
+          score += 10;
+          scoreText.setText('Score: ' + score);
+          log.disableBody(true, true)
+        }, null, this);
+
+        scoreText = this.add.text(16, 16, 'score: 0', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
         cursors = this.input.keyboard.createCursorKeys();
+
+        this.time.addEvent({
+            delay: 2000,
+            callback: ()=>{
+                logs.create(Phaser.Math.Between(40, 700), 0, 'log');
+            },
+            loop: true
+        });
     }
 
     update(){
@@ -212,11 +254,31 @@ class SceneB extends Phaser.Scene {
           player.setVelocityY(-170);
       }
 
-      if(player.body.touching.down){
-        var poop = 'poop';
-      }
+      // if(player.body.touching.down){
+      //   var poop = 'poop';
+      // }
     }
   }
+
+  class SceneC extends Phaser.Scene {
+    constructor ()
+    {
+        super('SceneC');
+    }
+
+    preload ()
+    {
+    }
+
+    create()
+    {
+    }
+
+    update()
+    {
+    }
+  }
+
   var config = {
       type: Phaser.AUTO,
       width: 740,
