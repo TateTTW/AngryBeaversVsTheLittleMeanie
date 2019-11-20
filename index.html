@@ -115,9 +115,18 @@ class SceneB extends Phaser.Scene {
         var menuBtn = this.add.image(680, 30, 'menuBtn').setInteractive();
         menuBtn.displayWidth = 80;
         menuBtn.scaleY = menuBtn.scaleX;
+
         menuBtn.on('pointerdown', function(){
           this.scene.start('SceneA');
         },this);
+
+        menuBtn.on('pointerover', () => {
+            menuBtn.setScale(.25);
+        });
+
+        menuBtn.on('pointerout',function(pointer){
+          menuBtn.setScale(.2);
+        })
 
         // add rocks
         rocks = this.physics.add.staticGroup();
