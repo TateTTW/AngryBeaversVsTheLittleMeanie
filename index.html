@@ -29,18 +29,26 @@ class SceneA extends Phaser.Scene {
     this.load.image('Daggett', 'assets/images/Daggett.png');
     this.load.image('Dam', 'assets/images/beaverDam.jpg');
     this.load.image('title', 'assets/images/title.png');
+    this.load.image('title2', 'assets/images/title2.png');
+    this.load.image('instructions', 'assets/images/instructions.png');
   }
 
   create(){
     cursors = this.input.keyboard.createCursorKeys();
     var dam = this.add.image(370, 290, 'Dam');
-
     dam.displayWidth = 750;
     dam.scaleY = dam.scaleX;
 
-    var daggett = this.add.image(300, 320, 'Daggett').setInteractive();
-    var norbert = this.add.image(485, 320, 'Norbert').setInteractive();
     this.add.image(390,150, 'title');
+    var title2 = this.add.image(390,470, 'title2');
+    title2.displayWidth = 610;
+    title2.scaleY = title2.scaleX;
+    var title2 = this.add.image(390,215, 'instructions');
+    title2.displayWidth = 200;
+    title2.scaleY = title2.scaleX;
+
+    var daggett = this.add.image(300, 355, 'Daggett').setInteractive();
+    var norbert = this.add.image(485, 355, 'Norbert').setInteractive();
 
     daggett.on('pointerdown', function(){
       beaver = 'dag';
@@ -54,21 +62,25 @@ class SceneA extends Phaser.Scene {
     daggett.on('pointerover', () => {
         daggett.setScale(1.2);
         norbert.setTintFill(20);
+        daggett.depth = 1;
     });
 
     daggett.on('pointerout',function(pointer){
       daggett.setScale(1);
       norbert.clearTint()
+      daggett.depth = 0;
     })
 
     norbert.on('pointerover', () => {
-        norbert.setScale(1.2);
-        daggett.setTintFill(20);
+      norbert.setScale(1.2);
+      daggett.setTintFill(20);
+      norbert.depth = 1;
     });
 
     norbert.on('pointerout',function(pointer){
       norbert.setScale(1);
       daggett.clearTint()
+      norbert.depth = 0;
     })
 
   }
@@ -115,6 +127,7 @@ class SceneB extends Phaser.Scene {
         var menuBtn = this.add.image(680, 30, 'menuBtn').setInteractive();
         menuBtn.displayWidth = 80;
         menuBtn.scaleY = menuBtn.scaleX;
+        menuBtn.depth = 1;
 
         menuBtn.on('pointerdown', function(){
           this.scene.start('SceneA');
@@ -146,6 +159,7 @@ class SceneB extends Phaser.Scene {
 
         for(var i = 0; i < 3; i++){
           var life = this.add.image(i * 32 +33, 60, beaver+'Life');
+          life.depth = 1;
           life.displayWidth = 35;
           life.scaleY = life.scaleX;
           lives.push(life);
@@ -248,6 +262,8 @@ class SceneB extends Phaser.Scene {
         }, null, this);
 
         scoreText = this.add.text(16, 16, 'score: 0', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
+        scoreText.depth = 1;
+
         cursors = this.input.keyboard.createCursorKeys();
 
         // add logs
@@ -324,7 +340,6 @@ class SceneB extends Phaser.Scene {
       {
           player.setVelocityY(-170);
       }
-
       // if(player.body.touching.down){
       //   var poop = 'poop';
       // }
