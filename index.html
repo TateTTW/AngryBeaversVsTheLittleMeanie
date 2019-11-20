@@ -29,9 +29,6 @@ class SceneA extends Phaser.Scene {
     this.load.image('Dam', 'assets/images/beaverDam.jpg');
   }
 
-  beaverClicked(){
-    this.scene.start('SceneB');
-  }
   create(){
     cursors = this.input.keyboard.createCursorKeys();
     var dam = this.add.image(370, 290, 'Dam');
@@ -75,6 +72,9 @@ class SceneB extends Phaser.Scene {
 
     create ()
     {
+        //reset score
+        score = 0;
+        // create background
         this.anims.create({
             key: 'movingwater',
             frames: this.anims.generateFrameNumbers('water', { start: 0, end: 2 }),
@@ -93,9 +93,8 @@ class SceneB extends Phaser.Scene {
           this.scene.start('SceneA');
         },this);
 
-
+        // add rocks
         rocks = this.physics.add.staticGroup();
-
         rocks.create(0, 560, 'rock');
         rocks.create(60, 560, 'rock');
         rocks.create(135, 565, 'rock');
@@ -178,11 +177,16 @@ class SceneB extends Phaser.Scene {
         player.displayWidth = 65;
         player.scaleY = player.scaleX;
 
+        // add collision events
         this.physics.add.collider(player, rocks, function(guy, rock){
           guy.enableBody(true, 360, 210, true, true)
-          var life = lives.pop();
-          life.destroy();
-
+          var life;
+          if(lives.length === 0){
+            this.scene.start('SceneC');
+          } else {
+            life = lives.pop();
+            life.destroy();
+          }
         }, null, this);
 
         this.physics.add.collider(rocks, logs, function(rock, log){
@@ -268,10 +272,27 @@ class SceneB extends Phaser.Scene {
 
     preload ()
     {
+        this.load.spritesheet('gameoversheet', 'assets/images/gameoversheet.png',{ frameWidth: 482, frameHeight: 362 });
+        this.load.image('gameovertxt', 'assets/images/gameovertxt.png');
     }
 
     create()
     {
+        var anim = this.anims.create({
+          key: 'gameover',
+          frames: this.anims.generateFrameNumbers('gameoversheet', { start: 0, end: 56 }),
+          frameRate: 15,
+          repeat: 0
+        });
+        var gameover = this.add.sprite(355, 287, 'gameoversheet').play('gameover');
+        gameover.displayWidth = 770;
+        gameover.scaleY = gameover.scaleX;
+
+        this.add.image(355, 287, 'gameovertxt');
+
+        gameover.on('animationcomplete', function(animation, frame) {
+          this.scene.start('SceneA');
+        }, this);
     }
 
     update()
@@ -289,7 +310,7 @@ class SceneB extends Phaser.Scene {
               gravity: { y: 200 }
           }
       },
-      scene: [ SceneA, SceneB ]
+      scene: [ SceneA, SceneB, SceneC ]
   };
   var game = new Phaser.Game(config);
     </script>
