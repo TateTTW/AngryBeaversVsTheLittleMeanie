@@ -11,6 +11,7 @@ var cursors;
 var player;
 var rocks;
 var logs;
+var cans;
 var direction;
 var time;
 var beaver = 'norb';
@@ -27,6 +28,7 @@ class SceneA extends Phaser.Scene {
     this.load.image('Norbert', 'assets/images/Norbert.png');
     this.load.image('Daggett', 'assets/images/Daggett.png');
     this.load.image('Dam', 'assets/images/beaverDam.jpg');
+    this.load.image('title', 'assets/images/title.png');
   }
 
   create(){
@@ -38,6 +40,8 @@ class SceneA extends Phaser.Scene {
 
     var daggett = this.add.image(300, 320, 'Daggett').setInteractive();
     var norbert = this.add.image(485, 320, 'Norbert').setInteractive();
+    this.add.image(390,150, 'title');
+
     daggett.on('pointerdown', function(){
       beaver = 'dag';
       this.scene.start('SceneB');
@@ -46,6 +50,27 @@ class SceneA extends Phaser.Scene {
       beaver = 'norb';
       this.scene.start('SceneB');
     },this);
+
+    daggett.on('pointerover', () => {
+        daggett.setScale(1.2);
+        norbert.setTintFill(20);
+    });
+
+    daggett.on('pointerout',function(pointer){
+      daggett.setScale(1);
+      norbert.clearTint()
+    })
+
+    norbert.on('pointerover', () => {
+        norbert.setScale(1.2);
+        daggett.setTintFill(20);
+    });
+
+    norbert.on('pointerout',function(pointer){
+      norbert.setScale(1);
+      daggett.clearTint()
+    })
+
   }
 
   update(){
@@ -60,6 +85,7 @@ class SceneB extends Phaser.Scene {
     }
     preload ()
     {
+        this.load.image('can', 'assets/images/can.png');
         this.load.image('rock', 'assets/images/rock.png');
         this.load.image('log', 'assets/images/log.png');
         this.load.image('menuBtn', 'assets/images/menu.png');
@@ -107,6 +133,7 @@ class SceneB extends Phaser.Scene {
         rocks.create(680, 560, 'rock');
 
         logs = this.physics.add.group();
+        cans = this.physics.add.group();
 
         for(var i = 0; i < 3; i++){
           var life = this.add.image(i * 32 +33, 60, beaver+'Life');
@@ -180,16 +207,18 @@ class SceneB extends Phaser.Scene {
         // add collision events
         this.physics.add.collider(player, rocks, function(guy, rock){
           guy.enableBody(true, 360, 210, true, true)
-          var life;
-          if(lives.length === 0){
-            this.scene.start('SceneC');
-          } else {
-            life = lives.pop();
-            life.destroy();
-          }
+          this.lifeLost();
         }, null, this);
 
         this.physics.add.collider(rocks, logs, function(rock, log){
+          log.disableBody(true, true)
+        }, null, this);
+
+        this.physics.add.collider(rocks, cans, function(rock, can){
+          can.disableBody(true, true)
+        }, null, this);
+
+        this.physics.add.collider(logs, cans, function(log, can){
           log.disableBody(true, true)
         }, null, this);
 
@@ -199,9 +228,20 @@ class SceneB extends Phaser.Scene {
           log.disableBody(true, true)
         }, null, this);
 
+        this.physics.add.collider(player, cans, function(can, log){
+          score -= 10;
+          if(score < 0){
+            score = 0
+            this.lifeLost();
+          }
+          scoreText.setText('Score: ' + score);
+          log.disableBody(true, true)
+        }, null, this);
+
         scoreText = this.add.text(16, 16, 'score: 0', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
         cursors = this.input.keyboard.createCursorKeys();
 
+        // add logs
         this.time.addEvent({
             delay: 2000,
             callback: ()=>{
@@ -209,6 +249,24 @@ class SceneB extends Phaser.Scene {
             },
             loop: true
         });
+        // add cans
+        this.time.addEvent({
+            delay: 1220,
+            callback: ()=>{
+                cans.create(Phaser.Math.Between(40, 700), 0, 'can');
+            },
+            loop: true
+        });
+    }
+
+    lifeLost(){
+      var life;
+      if(lives.length === 0){
+        this.scene.start('SceneC');
+      } else {
+        life = lives.pop();
+        life.destroy();
+      }
     }
 
     update(){
