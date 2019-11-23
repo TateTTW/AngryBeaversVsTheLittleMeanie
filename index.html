@@ -11,10 +11,11 @@ var cursors;
 var player;
 var rocks;
 var logs;
+var droppedLogs;
 var cans;
 var direction;
 var time;
-var beaver = 'norb';
+var beaver = '';
 var lives = [];
 
 class SceneA extends Phaser.Scene {
@@ -82,12 +83,9 @@ class SceneA extends Phaser.Scene {
       daggett.clearTint()
       norbert.depth = 0;
     })
-
   }
 
-  update(){
-
-  }
+  update(){}
 }
 
 class SceneB extends Phaser.Scene {
@@ -100,6 +98,7 @@ class SceneB extends Phaser.Scene {
         this.load.image('can', 'assets/images/can.png');
         this.load.image('rock', 'assets/images/rock.png');
         this.load.image('log', 'assets/images/log.png');
+        this.load.image('droppedLog', 'assets/images/droppedLog.png');
         this.load.image('menuBtn', 'assets/images/menu.png');
         this.load.image('norbLife', 'assets/images/norbLife.png');
         this.load.image('dagLife', 'assets/images/dagLife.png');
@@ -156,6 +155,7 @@ class SceneB extends Phaser.Scene {
 
         logs = this.physics.add.group();
         cans = this.physics.add.group();
+        droppedLogs = this.physics.add.group();
 
         for(var i = 0; i < 3; i++){
           var life = this.add.image(i * 32 +33, 60, beaver+'Life');
@@ -165,61 +165,34 @@ class SceneB extends Phaser.Scene {
           lives.push(life);
         }
 
-            this.anims.create({
-                key: 'norbLeft',
-                frames: this.anims.generateFrameNumbers('norb', { start: 0, end: 8 }),
-                frameRate: 10,
-                repeat: -1
-            });
+        // create player animations
+        this.anims.create({
+            key: beaver + 'Left',
+            frames: this.anims.generateFrameNumbers(beaver, { start: 0, end: 8 }),
+            frameRate: 10,
+            repeat: -1
+        });
 
-            this.anims.create({
-                key: 'norbUpLeft',
-                frames: this.anims.generateFrameNumbers('norb', { start: 0, end: 8 }),
-                frameRate: 24,
-                repeat: -1
-            });
+        this.anims.create({
+            key: beaver + 'UpLeft',
+            frames: this.anims.generateFrameNumbers(beaver, { start: 0, end: 8 }),
+            frameRate: 24,
+            repeat: -1
+        });
 
-            this.anims.create({
-                key: 'norbRight',
-                frames: this.anims.generateFrameNumbers('norb', { start: 9, end: 15 }),
-                frameRate: 10,
-                repeat: -1
-            });
+        this.anims.create({
+            key: beaver + 'Right',
+            frames: this.anims.generateFrameNumbers(beaver, { start: 9, end: 15 }),
+            frameRate: 10,
+            repeat: -1
+        });
 
-            this.anims.create({
-                key: 'norbUpRight',
-                frames: this.anims.generateFrameNumbers('norb', { start: 9, end: 15 }),
-                frameRate: 24,
-                repeat: -1
-            });
-
-            this.anims.create({
-                key: 'dagLeft',
-                frames: this.anims.generateFrameNumbers('dag', { start: 0, end: 8 }),
-                frameRate: 10,
-                repeat: -1
-            });
-
-            this.anims.create({
-                key: 'dagUpLeft',
-                frames: this.anims.generateFrameNumbers('dag', { start: 0, end: 8 }),
-                frameRate: 24,
-                repeat: -1
-            });
-
-            this.anims.create({
-                key: 'dagRight',
-                frames: this.anims.generateFrameNumbers('dag', { start: 9, end: 15 }),
-                frameRate: 10,
-                repeat: -1
-            });
-
-            this.anims.create({
-                key: 'dagUpRight',
-                frames: this.anims.generateFrameNumbers('dag', { start: 9, end: 15 }),
-                frameRate: 24,
-                repeat: -1
-            });
+        this.anims.create({
+            key: beaver + 'UpRight',
+            frames: this.anims.generateFrameNumbers(beaver, { start: 9, end: 15 }),
+            frameRate: 24,
+            repeat: -1
+        });
 
         // create player
         player = this.physics.add.sprite(360, 210, beaver).play(beaver+'Right');
@@ -228,37 +201,41 @@ class SceneB extends Phaser.Scene {
         player.scaleY = player.scaleX;
 
         // add collision events
-        this.physics.add.collider(player, rocks, function(guy, rock){
-          guy.enableBody(true, 360, 210, true, true)
+        this.physics.add.collider(player, rocks, function(person, rock){
+          person.enableBody(true, 360, 210, true, true)
           this.lifeLost();
         }, null, this);
 
         this.physics.add.collider(rocks, logs, function(rock, log){
-          log.disableBody(true, true)
+          log.disableBody(true, true);
         }, null, this);
 
         this.physics.add.collider(rocks, cans, function(rock, can){
-          can.disableBody(true, true)
+          can.disableBody(true, true);
         }, null, this);
 
         this.physics.add.collider(logs, cans, function(log, can){
-          log.disableBody(true, true)
+          log.disableBody(true, true);
         }, null, this);
 
-        this.physics.add.collider(player, logs, function(guy, log){
+        this.physics.add.collider(player, logs, function(person, log){
           score += 10;
           scoreText.setText('Score: ' + score);
-          log.disableBody(true, true)
+          log.disableBody(true, true);
         }, null, this);
 
-        this.physics.add.collider(player, cans, function(can, log){
-          score -= 10;
+        this.physics.add.collider(player, cans, function(guy, can){
+          if (score >= 0){
+            this.dropLogs(guy.x, guy.y);
+            score -= 10;
+          }
+
           if(score < 0){
             score = 0
             this.lifeLost();
           }
           scoreText.setText('Score: ' + score);
-          log.disableBody(true, true)
+          can.disableBody(true, true);
         }, null, this);
 
         scoreText = this.add.text(16, 16, 'score: 0', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
@@ -294,16 +271,85 @@ class SceneB extends Phaser.Scene {
       }
     }
 
+    dropLogs(x, y){
+      var logs = [];
+      var log = droppedLogs.create(player.x, player.y, 'droppedLog');
+      log.setVelocityX(170);
+      log.setVelocityY(-250);
+      logs[logs.length] = log;
+
+      log = droppedLogs.create(player.x, player.y, 'droppedLog');
+      log.setVelocityX(-170);
+      log.setVelocityY(-250);
+      logs[logs.length] = log;
+
+      var log = null;
+      log = droppedLogs.create(player.x, player.y, 'droppedLog');
+      log.setVelocityX(230);
+      log.setVelocityY(-130);
+      logs[logs.length] = log;
+
+      var log = null;
+      log = droppedLogs.create(player.x, player.y, 'droppedLog');
+      log.setVelocityX(-230);
+      log.setVelocityY(-130);
+      logs[logs.length] = log;
+
+      var log = null;
+      log = droppedLogs.create(player.x, player.y, 'droppedLog');
+      log.setVelocityX(-170);
+      log.setVelocityY(-40);
+      logs[logs.length] = log;
+
+      var log = null;
+      log = droppedLogs.create(player.x, player.y, 'droppedLog');
+      log.setVelocityX(170);
+      log.setVelocityY(-40);
+      logs[logs.length] = log;
+
+      var tween;
+      var object;
+      for(var i = 0; i < logs.length; i++){
+        object = logs[i]
+        this.object = object;
+        tween = this.tweens.add({
+          delay:300,
+          targets: object,
+          alpha: 0,
+          duration: 300,
+          ease: 'sine',
+          onComplete: ()=>{
+            object.disableBody(true, true);
+          }
+        }, this);
+      }
+
+      this.time.addEvent({
+          delay: 0,
+          callback: ()=>{
+              var alt;
+              for(var i = 0; i < logs.length; i++){
+                alt = i%2===0 ? -4 : 4;
+                logs[i].angle += alt;
+              }
+          },
+          loop: true
+      },this);
+
+    }
+
     update(){
       if(cursors.up.isDown && cursors.left.isDown){
           direction = 'left';
           player.setVelocityX(-160);
           player.anims.play(beaver+'UpLeft', true);
+          this.rotatePlayerLeft();
       }
       else if(cursors.up.isDown && cursors.right.isDown){
           direction = 'right';
           player.setVelocityX(160);
           player.anims.play(beaver+'UpRight', true);
+          this.rotatePlayerRight();
       }
       else if(cursors.up.isDown && direction === 'left'){
           player.setVelocityX(0);
@@ -318,12 +364,14 @@ class SceneB extends Phaser.Scene {
           direction = 'left';
           player.setVelocityX(-160);
           player.anims.play(beaver+'Left', true);
+          this.rotatePlayerLeft();
       }
       else if (cursors.right.isDown)
       {
           direction = 'right';
           player.setVelocityX(160);
           player.anims.play(beaver+'Right', true);
+          this.rotatePlayerRight();
       }
       else
       {
@@ -336,13 +384,38 @@ class SceneB extends Phaser.Scene {
           player.setVelocityY(150);
       }
 
+      if(cursors.left.isUp && cursors.right.isUp){
+        player.angle = 0;
+      }
+
       if (cursors.up.isDown)
       {
           player.setVelocityY(-170);
       }
-      // if(player.body.touching.down){
-      //   var poop = 'poop';
-      // }
+    }
+
+    rotatePlayerLeft(){
+      if(player.angle > -20)
+        this.time.addEvent({
+            delay: 0,
+            duration: 10,
+            callback: ()=>{
+                player.angle -=2;
+            },
+            loop: false
+        });
+    }
+
+    rotatePlayerRight(){
+      if(player.angle < 20)
+        this.time.addEvent({
+            delay: 0,
+            duration: 10,
+            callback: ()=>{
+                player.angle +=2;
+            },
+            loop: false
+        });
     }
   }
 
@@ -377,9 +450,7 @@ class SceneB extends Phaser.Scene {
         }, this);
     }
 
-    update()
-    {
-    }
+    update() {}
   }
 
   var config = {
