@@ -267,7 +267,17 @@ class SceneB extends Phaser.Scene {
         this.scene.start('SceneC');
       } else {
         life = lives.pop();
-        life.destroy();
+        this.tweens.add({
+          targets: life,
+          alpha: 0,
+          ease: 'easeInQuint',
+          duration: 300,
+          repeat: 1,
+          yoyo: true,
+          onComplete: ()=>{
+            life.destroy();
+          }
+        });
       }
     }
 
