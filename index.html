@@ -226,11 +226,11 @@ class SceneB extends Phaser.Scene {
         }, null, this);
 
         this.physics.add.collider(logs, cups, function(log, cup){
-          log.destroy();
+          cup.destroy();
         }, null, this);
 
         this.physics.add.collider(logs, cans, function(log, can){
-          log.destroy();
+          can.destroy();
         }, null, this);
 
         this.physics.add.collider(player, logs, function(person, log){
@@ -276,7 +276,8 @@ class SceneB extends Phaser.Scene {
         this.time.addEvent({
             delay: 2000,
             callback: ()=>{
-                logs.create(Phaser.Math.Between(40, 700), 0, 'log');
+                var log = logs.create(Phaser.Math.Between(40, 700), 0, 'log');
+                log.immovable = true;
             },
             loop: true
         });
