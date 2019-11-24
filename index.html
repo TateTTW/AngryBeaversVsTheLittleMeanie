@@ -273,6 +273,7 @@ class SceneB extends Phaser.Scene {
 
     dropLogs(x, y){
       var logs = [];
+      // create 6 dropped logs
       var log = droppedLogs.create(player.x, player.y, 'droppedLog');
       log.setVelocityX(170);
       log.setVelocityY(-250);
@@ -392,6 +393,12 @@ class SceneB extends Phaser.Scene {
       {
           player.setVelocityY(-170);
       }
+
+      if(cans.children.entries.length > 0){
+        for(let i = 0; i < cans.children.entries.length; i++){
+          cans.children.entries[i].angle += Phaser.Math.Between(-3, 3);
+        }
+      }
     }
 
     rotatePlayerLeft(){
@@ -400,7 +407,7 @@ class SceneB extends Phaser.Scene {
             delay: 0,
             duration: 10,
             callback: ()=>{
-                player.angle -=2;
+                player.angle -=3;
             },
             loop: false
         });
@@ -412,7 +419,7 @@ class SceneB extends Phaser.Scene {
             delay: 0,
             duration: 10,
             callback: ()=>{
-                player.angle +=2;
+                player.angle +=3;
             },
             loop: false
         });
