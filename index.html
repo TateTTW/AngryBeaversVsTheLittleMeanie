@@ -13,6 +13,7 @@ var rocks;
 var logs;
 var droppedLogs;
 var cans;
+var cups;
 var direction;
 var time;
 var beaver = '';
@@ -96,6 +97,7 @@ class SceneB extends Phaser.Scene {
     preload ()
     {
         this.load.image('can', 'assets/images/can.png');
+        this.load.image('cup', 'assets/images/cup.png');
         this.load.image('rock', 'assets/images/rock.png');
         this.load.image('log', 'assets/images/log.png');
         this.load.image('droppedLog', 'assets/images/droppedLog.png');
@@ -155,6 +157,7 @@ class SceneB extends Phaser.Scene {
 
         logs = this.physics.add.group();
         cans = this.physics.add.group();
+        cups = this.physics.add.group();
         droppedLogs = this.physics.add.group();
 
         for(var i = 0; i < 3; i++){
@@ -207,26 +210,38 @@ class SceneB extends Phaser.Scene {
         }, null, this);
 
         this.physics.add.collider(rocks, logs, function(rock, log){
-          log.disableBody(true, true);
+          log.destroy();
         }, null, this);
 
         this.physics.add.collider(rocks, cans, function(rock, can){
-          can.disableBody(true, true);
+          can.destroy();
+        }, null, this);
+
+        this.physics.add.collider(rocks, cups, function(rock, cup){
+          cup.destroy();
+        }, null, this);
+
+        this.physics.add.collider(cans, cups, function(can, cup){
+          can.destroy();
+        }, null, this);
+
+        this.physics.add.collider(logs, cups, function(log, cup){
+          log.destroy();
         }, null, this);
 
         this.physics.add.collider(logs, cans, function(log, can){
-          log.disableBody(true, true);
+          log.destroy();
         }, null, this);
 
         this.physics.add.collider(player, logs, function(person, log){
           score += 10;
           scoreText.setText('Score: ' + score);
-          log.disableBody(true, true);
+          log.destroy();
         }, null, this);
 
-        this.physics.add.collider(player, cans, function(guy, can){
+        this.physics.add.collider(player, cans, function(person, can){
           if (score >= 0){
-            this.dropLogs(guy.x, guy.y);
+            this.dropLogs(person.x, person.y);
             score -= 10;
           }
 
@@ -235,7 +250,21 @@ class SceneB extends Phaser.Scene {
             this.lifeLost();
           }
           scoreText.setText('Score: ' + score);
-          can.disableBody(true, true);
+          can.destroy();
+        }, null, this);
+
+        this.physics.add.collider(player, cups, function(person, cup){
+          if (score >= 0){
+            this.dropLogs(person.x, person.y);
+            score -= 20;
+          }
+
+          if(score < 0){
+            score = 0
+            this.lifeLost();
+          }
+          scoreText.setText('Score: ' + score);
+          cup.destroy();
         }, null, this);
 
         scoreText = this.add.text(16, 16, 'score: 0', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
@@ -256,6 +285,15 @@ class SceneB extends Phaser.Scene {
             delay: 1220,
             callback: ()=>{
                 cans.create(Phaser.Math.Between(40, 700), 0, 'can');
+            },
+            loop: true
+        });
+
+        // add cups
+        this.time.addEvent({
+            delay: 3000,
+            callback: ()=>{
+                cups.create(Phaser.Math.Between(40, 700), 0, 'cup');
             },
             loop: true
         });
@@ -404,11 +442,19 @@ class SceneB extends Phaser.Scene {
           player.setVelocityY(-170);
       }
 
+      // wiggle cans
       if(cans.children.entries.length > 0){
         for(let i = 0; i < cans.children.entries.length; i++){
           cans.children.entries[i].angle += Phaser.Math.Between(-3, 3);
         }
       }
+      //wiggle cups
+      if(cups.children.entries.length > 0){
+        for(let i = 0; i < cups.children.entries.length; i++){
+          cups.children.entries[i].angle += Phaser.Math.Between(-4, 4);
+        }
+      }
+
     }
 
     rotatePlayerLeft(){
