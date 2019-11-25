@@ -5,13 +5,20 @@
 </head>
 <body>
     <script>
+var lvl = 1;
 var score = 0;
+var lvlText;
 var scoreText;
+var logCreator;
+var canCreator;
+var cupCreator;
+var barrelCreator;
 var cursors;
 var player;
 var rocks;
 var logs;
 var droppedLogs;
+var barrels;
 var cans;
 var cups;
 var direction;
@@ -107,12 +114,14 @@ class SceneB extends Phaser.Scene {
         this.load.spritesheet('water', 'assets/images/watersheet.png',{ frameWidth: 370, frameHeight: 361 });
         this.load.spritesheet('norb', 'assets/images/norbsheet.png',{ frameWidth: 500, frameHeight: 500 });
         this.load.spritesheet('dag', 'assets/images/dagsheet.png',{ frameWidth: 500, frameHeight: 500 });
+        this.load.spritesheet('barrel', 'assets/images/toxicsheet.png',{ frameWidth: 39, frameHeight: 65 });
     }
 
     create ()
     {
         //reset score
         score = 0;
+        lvl = 0;
         // create background
         this.anims.create({
             key: 'movingwater',
@@ -158,6 +167,7 @@ class SceneB extends Phaser.Scene {
         logs = this.physics.add.group();
         cans = this.physics.add.group();
         cups = this.physics.add.group();
+        barrels = this.physics.add.group();
         droppedLogs = this.physics.add.group();
 
         for(var i = 0; i < 3; i++){
@@ -197,18 +207,22 @@ class SceneB extends Phaser.Scene {
             repeat: -1
         });
 
+        //create toxic animation
+        this.anims.create({
+            key: 'toxicBarrel',
+            frames: this.anims.generateFrameNumbers('barrel', { start: 0, end: 1 }),
+            frameRate: 4,
+            repeat: -1
+        });
+
         // create player
         player = this.physics.add.sprite(360, 210, beaver).play(beaver+'Right');
         player.setCollideWorldBounds(true);
         player.displayWidth = 65;
         player.scaleY = player.scaleX;
+        player.setMass(45);
 
         // add collision events
-        this.physics.add.collider(player, rocks, function(person, rock){
-          person.enableBody(true, 360, 210, true, true)
-          this.lifeLost();
-        }, null, this);
-
         this.physics.add.collider(rocks, logs, function(rock, log){
           log.destroy();
         }, null, this);
@@ -221,22 +235,33 @@ class SceneB extends Phaser.Scene {
           cup.destroy();
         }, null, this);
 
-        this.physics.add.collider(cans, cups, function(can, cup){
-          can.destroy();
+        this.physics.add.collider(rocks, barrels, function(rock, barrel){
+          barrel.destroy();
         }, null, this);
 
-        this.physics.add.collider(logs, cups, function(log, cup){
-          cup.destroy();
-        }, null, this);
-
-        this.physics.add.collider(logs, cans, function(log, can){
-          can.destroy();
+        this.physics.add.collider(player, rocks, function(person, rock){
+          person.enableBody(true, 360, 210, true, true)
+          this.lifeLost();
         }, null, this);
 
         this.physics.add.collider(player, logs, function(person, log){
           score += 10;
           scoreText.setText('Score: ' + score);
           log.destroy();
+        }, null, this);
+
+        this.physics.add.collider(player, barrels, function(person, barrel){
+          if (score >= 0){
+            this.dropLogs(person.x, person.y);
+            score -= 50;
+          }
+
+          if(score < 0)
+            score = 0
+
+          scoreText.setText('Score: ' + score);
+          barrel.destroy();
+          this.lifeLost();
         }, null, this);
 
         this.physics.add.collider(player, cans, function(person, can){
@@ -267,37 +292,78 @@ class SceneB extends Phaser.Scene {
           cup.destroy();
         }, null, this);
 
+        lvlText = this.add.text(330, 16, 'Level 1', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
+        lvlText.depth = 1;
+
         scoreText = this.add.text(16, 16, 'score: 0', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
         scoreText.depth = 1;
 
         cursors = this.input.keyboard.createCursorKeys();
 
+        // add barrels
+        barrelCreator = this.time.addEvent({
+            delay: 5000,
+            callback: ()=>{
+                var barrel = this.physics.add.sprite(Phaser.Math.Between(40, 700), 0, 'barrel').play('toxicBarrel');
+                barrel.setMass(30);
+                barrels.add(barrel);
+            },
+            loop: true
+        });
+
         // add logs
-        this.time.addEvent({
+        logCreator = this.time.addEvent({
             delay: 2000,
             callback: ()=>{
                 var log = logs.create(Phaser.Math.Between(40, 700), 0, 'log');
-                log.immovable = true;
+                log.setMass(20);
             },
             loop: true
         });
         // add cans
-        this.time.addEvent({
+        canCreator = this.time.addEvent({
             delay: 1220,
             callback: ()=>{
-                cans.create(Phaser.Math.Between(40, 700), 0, 'can');
+                var can = cans.create(Phaser.Math.Between(40, 700), 0, 'can');
+                can.setMass(10);
             },
             loop: true
         });
 
         // add cups
-        this.time.addEvent({
+        cupCreator = this.time.addEvent({
             delay: 3000,
             callback: ()=>{
-                cups.create(Phaser.Math.Between(40, 700), 0, 'cup');
+                var cup = cups.create(Phaser.Math.Between(40, 700), 0, 'cup');
+                cup.setMass(5);
             },
             loop: true
         });
+
+        // procedurally increase level
+        this.time.addEvent({
+            delay: 20000,
+            callback: ()=>{
+                lvl += 1;
+                if(lvl === 36){
+                  this.scene.start('SceneD');
+                }
+                lvlText.setText('Level ' + lvl);
+
+                if(cupCreator.delay > 400)
+                  cupCreator.delay -= 100;
+
+                if(canCreator.delay > 300)
+                  canCreator.delay -= 100;
+
+                if(logCreator.delay > 400)
+                  logCreator.delay -= 80;
+
+                if(lvl >= 25 && barrelCreator.delay > 500)
+                  barrelCreator.delay -= 400;
+            },
+            loop: true
+        },this);
     }
 
     lifeLost(){
@@ -455,7 +521,6 @@ class SceneB extends Phaser.Scene {
           cups.children.entries[i].angle += Phaser.Math.Between(-4, 4);
         }
       }
-
     }
 
     rotatePlayerLeft(){
@@ -517,6 +582,43 @@ class SceneB extends Phaser.Scene {
     update() {}
   }
 
+  class SceneD extends Phaser.Scene {
+    constructor ()
+    {
+        super('SceneD');
+    }
+
+    preload ()
+    {
+        this.load.spritesheet('winsheet', 'assets/images/winsheet.png',{ frameWidth: 482, frameHeight: 362 });
+        this.load.image('wontxt', 'assets/images/youwin.png');
+    }
+
+    create()
+    {
+        var anim = this.anims.create({
+          key: 'won',
+          frames: this.anims.generateFrameNumbers('winsheet', { start: 0, end: 4 }),
+          frameRate: 10,
+          repeat: 7
+        });
+        var won = this.add.sprite(355, 287, 'winsheet').play('won');
+        won.displayWidth = 770;
+        won.scaleY = won.scaleX;
+
+        this.add.image(380, 170, 'wontxt');
+        this.add.text(240, 200, 'Final Score: ' + score, { strokeThickness: 5, fontSize: '30px', fill: '#000' });
+
+        won.on('animationcomplete', function(animation, frame) {
+          this.scene.start('SceneA');
+        }, this);
+    }
+
+    update() {}
+  }
+
+
+
   var config = {
       type: Phaser.AUTO,
       width: 740,
@@ -527,7 +629,7 @@ class SceneB extends Phaser.Scene {
               gravity: { y: 200 }
           }
       },
-      scene: [ SceneA, SceneB, SceneC ]
+      scene: [ SceneA, SceneB, SceneC, SceneD ]
   };
   var game = new Phaser.Game(config);
     </script>
