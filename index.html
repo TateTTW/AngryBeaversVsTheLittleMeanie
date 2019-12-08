@@ -26,11 +26,10 @@ var time;
 var beaver = '';
 var lives = [];
 
-class SceneA extends Phaser.Scene {
-
+class SelectScene extends Phaser.Scene {
   constructor ()
   {
-      super('SceneA');
+      super('SelectScene');
   }
 
   preload(){
@@ -61,11 +60,11 @@ class SceneA extends Phaser.Scene {
 
     daggett.on('pointerdown', function(){
       beaver = 'dag';
-      this.scene.start('SceneB');
+      this.scene.start('InstructScene');
     },this);
     norbert.on('pointerdown', function(){
       beaver = 'norb';
-      this.scene.start('SceneB');
+      this.scene.start('InstructScene');
     },this);
 
     daggett.on('pointerover', () => {
@@ -96,10 +95,81 @@ class SceneA extends Phaser.Scene {
   update(){}
 }
 
-class SceneB extends Phaser.Scene {
+class InstructScene extends Phaser.Scene {
+  constructor ()
+  {
+      super('InstructScene');
+  }
+
+  preload(){
+    this.load.image('instuctTitle', 'assets/images/InstuctTitle.png');
+    this.load.image('Dam', 'assets/images/beaverDam.jpg');
+    this.load.image('orange', 'assets/images/orangeBackground.jpg');
+    this.load.image('log', 'assets/images/log.png');
+    this.load.image('can', 'assets/images/can.png');
+    this.load.image('cup', 'assets/images/cup.png');
+    this.load.spritesheet('barrel', 'assets/images/toxicsheet.png',{ frameWidth: 39, frameHeight: 65 });
+    this.load.image('rock', 'assets/images/rock.png');
+  }
+
+  create(){
+    var logTxt;
+    var canTxt;
+    var cupTxt;
+    var rockTxt;
+    var barrelTxt;
+
+    var dam = this.add.image(370, 290, 'Dam');
+    dam.displayWidth = 750;
+    dam.scaleY = dam.scaleX;
+
+    // var square = this.add.image(380, 330, 'orange');
+    var square = this.add.image(380, 285, 'orange');
+    square.displayWidth = 490;
+    square.displayHeight = 440;
+
+    var title = this.add.image(384, 120, 'instuctTitle');
+    // title.displayWidth = 600;
+
+    this.add.image(220, 190, 'log');
+
+    this.add.image(220, 240, 'can');
+
+    this.add.image(220, 295, 'cup');
+
+    this.add.image(220, 365, 'rock');
+
+    this.anims.create({
+        key: 'toxicBarrel',
+        frames: this.anims.generateFrameNumbers('barrel', { start: 0, end: 1 }),
+        frameRate: 4,
+        repeat: -1
+    });
+
+    this.add.sprite(220, 445, 'barrel').play('toxicBarrel');
+
+    logTxt = this.add.text(270, 175, '+10 Points', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
+    canTxt = this.add.text(270, 225, '-10 Points', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
+    cupTxt = this.add.text(270, 280, '-20 Points', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
+    rockTxt = this.add.text(270, 350, '-1 Life', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
+    barrelTxt = this.add.text(270, 430, '-1 Life And -50 Points', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
+
+    this.time.addEvent({
+        delay: 4000,
+        callback: ()=>{
+            this.scene.start('PlayScene');
+        },
+    },this);
+
+  }
+
+  update(){}
+}
+
+class PlayScene extends Phaser.Scene {
     constructor ()
     {
-        super('SceneB');
+        super('PlayScene');
     }
     preload ()
     {
@@ -140,7 +210,7 @@ class SceneB extends Phaser.Scene {
         menuBtn.depth = 1;
 
         menuBtn.on('pointerdown', function(){
-          this.scene.start('SceneA');
+          this.scene.start('SelectScene');
         },this);
 
         menuBtn.on('pointerover', () => {
@@ -295,7 +365,7 @@ class SceneB extends Phaser.Scene {
         lvlText = this.add.text(330, 16, 'Level 1', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
         lvlText.depth = 1;
 
-        scoreText = this.add.text(16, 16, 'score: 0', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
+        scoreText = this.add.text(16, 16, 'Score: 0', { strokeThickness: 10, fontSize: '20px', fill: '#000' });
         scoreText.depth = 1;
 
         cursors = this.input.keyboard.createCursorKeys();
@@ -346,7 +416,7 @@ class SceneB extends Phaser.Scene {
             callback: ()=>{
                 lvl += 1;
                 if(lvl === 36){
-                  this.scene.start('SceneD');
+                  this.scene.start('WinScene');
                 }
                 lvlText.setText('Level ' + lvl);
 
@@ -369,7 +439,7 @@ class SceneB extends Phaser.Scene {
     lifeLost(){
       var life;
       if(lives.length === 0){
-        this.scene.start('SceneC');
+        this.scene.start('LoseScene');
       } else {
         life = lives.pop();
         this.tweens.add({
@@ -548,10 +618,10 @@ class SceneB extends Phaser.Scene {
     }
   }
 
-  class SceneC extends Phaser.Scene {
+  class LoseScene extends Phaser.Scene {
     constructor ()
     {
-        super('SceneC');
+        super('LoseScene');
     }
 
     preload ()
@@ -575,17 +645,17 @@ class SceneB extends Phaser.Scene {
         this.add.image(355, 287, 'gameovertxt');
 
         gameover.on('animationcomplete', function(animation, frame) {
-          this.scene.start('SceneA');
+          this.scene.start('SelectScene');
         }, this);
     }
 
     update() {}
   }
 
-  class SceneD extends Phaser.Scene {
+  class WinScene extends Phaser.Scene {
     constructor ()
     {
-        super('SceneD');
+        super('WinScene');
     }
 
     preload ()
@@ -610,7 +680,7 @@ class SceneB extends Phaser.Scene {
         this.add.text(240, 200, 'Final Score: ' + score, { strokeThickness: 5, fontSize: '30px', fill: '#000' });
 
         won.on('animationcomplete', function(animation, frame) {
-          this.scene.start('SceneA');
+          this.scene.start('SelectScene');
         }, this);
     }
 
@@ -629,7 +699,7 @@ class SceneB extends Phaser.Scene {
               gravity: { y: 200 }
           }
       },
-      scene: [ SceneA, SceneB, SceneC, SceneD ]
+      scene: [SelectScene, InstructScene, PlayScene, LoseScene, WinScene ]
   };
   var game = new Phaser.Game(config);
     </script>
